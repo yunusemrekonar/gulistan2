@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 
 type HeartFloater = {
   id: string
@@ -14,6 +15,18 @@ type HeartFloater = {
   y1: number
   r0: number
   r1: number
+}
+
+type CSSVars = React.CSSProperties & {
+  ['--op']?: string
+  ['--dur']?: string
+  ['--x0']?: string
+  ['--y0']?: string
+  ['--x1']?: string
+  ['--y1']?: string
+  ['--r0']?: string
+  ['--r1']?: string
+  ['--fs']?: string
 }
 
 function rand(min: number, max: number) {
@@ -31,13 +44,13 @@ export default function Page() {
     setRunning(true)
 
     if (!audioRef.current) {
-      const a = new Audio('/song.m4a')
-      a.loop = true
-      a.volume = 0.85
-      a.play().catch(() => { })
-      audioRef.current = a
+      const audio = new Audio('/song.m4a')
+      audio.loop = true
+      audio.volume = 0.85
+      audio.play().catch(() => {})
+      audioRef.current = audio
     } else {
-      audioRef.current.play().catch(() => { })
+      audioRef.current.play().catch(() => {})
     }
   }
 
@@ -45,26 +58,21 @@ export default function Page() {
     if (!running) return
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 520
-
-    // Kalpler daha büyük + sayısı dengeli
     const heartCount = isMobile ? 26 : 52
 
-    const createdHearts: HeartFloater[] = Array.from({ length: heartCount }).map((_, i) => {
+    const created: HeartFloater[] = Array.from({ length: heartCount }).map((_, i) => {
       const emoji = heartEmojis[Math.floor(Math.random() * heartEmojis.length)]
 
       const x0 = rand(-10, 110)
       const y0 = rand(-10, 110)
-
-      // sağ/sol/aşağı/yukarı karışık drift
       const x1 = x0 + rand(-85, 85)
       const y1 = y0 + rand(-95, 95)
 
       return {
         id: `heart-${Date.now()}-${i}-${Math.random().toString(16).slice(2)}`,
         emoji,
-        // daha büyük kalpler:
-        fs: rand(isMobile ? 18 : 22, isMobile ? 34 : 44),
-        op: rand(0.10, 0.22),
+        fs: rand(isMobile ? 18 : 22, isMobile ? 34 : 44), // büyük kalpler
+        op: rand(0.1, 0.22),
         dur: rand(7, 16),
         x0,
         y0,
@@ -75,32 +83,32 @@ export default function Page() {
       }
     })
 
-    setHearts(createdHearts)
+    setHearts(created)
   }, [running, heartEmojis])
 
   return (
     <main className="page">
-      {/* ARKA PLAN: uçuşan kalpler (butona basınca başlar) */}
+      {/* ARKA PLAN: uçuşan kalpler */}
       <div className="float-layer" aria-hidden="true">
-        {hearts.map((h) => (
-          <div
-            key={h.id}
-            className="heart-floater"
-            style={{
-              ['--op' as any]: h.op,
-              ['--dur' as any]: `${h.dur}s`,
-              ['--x0' as any]: `${h.x0}vw`,
-              ['--y0' as any]: `${h.y0}vh`,
-              ['--x1' as any]: `${h.x1}vw`,
-              ['--y1' as any]: `${h.y1}vh`,
-              ['--r0' as any]: `${h.r0}deg`,
-              ['--r1' as any]: `${h.r1}deg`,
-              ['--fs' as any]: `${h.fs}px`,
-            }}
-          >
-            {h.emoji}
-          </div>
-        ))}
+        {hearts.map((h) => {
+          const styleVars: CSSVars = {
+            ['--op']: String(h.op),
+            ['--dur']: `${h.dur}s`,
+            ['--x0']: `${h.x0}vw`,
+            ['--y0']: `${h.y0}vh`,
+            ['--x1']: `${h.x1}vw`,
+            ['--y1']: `${h.y1}vh`,
+            ['--r0']: `${h.r0}deg`,
+            ['--r1']: `${h.r1}deg`,
+            ['--fs']: `${h.fs}px`,
+          }
+
+          return (
+            <div key={h.id} className="heart-floater" style={styleVars}>
+              {h.emoji}
+            </div>
+          )
+        })}
       </div>
 
       <div className="vignette" />
@@ -108,10 +116,18 @@ export default function Page() {
       {/* ÖN PLAN */}
       <div className="content">
         <section className="card">
-          {/* Ortadaki foto */}
-          <img className="photo" src="/bg.jpeg" alt="photo" />
+          {/* ORTADAKİ FOTO */}
+          <Image
+            className="photo"
+            src="/bg.jpeg"
+            alt="photo"
+            width={1200}
+            height={800}
+            priority
+          />
 
           <div className="card-text">
+            {/* ❤️ ROMANTİK METİN */}
             <h1 className="title">
               İyi ki doğdun aşkım 💖
               <br />
@@ -128,9 +144,13 @@ export default function Page() {
               her an.
             </p>
 
-
+            {/* ❤️ KALP + ALT YAZI */}
             <div className="actions">
-              <button className="heart-btn" onClick={start} aria-label="Kalbe dokun">
+              <button
+                className="heart-btn"
+                onClick={start}
+                aria-label="Kalbe dokun"
+              >
                 <span>❤️</span>
               </button>
 
