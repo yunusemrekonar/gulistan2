@@ -13,11 +13,9 @@ html, body {
 
   /* ✅ 100vw yerine 100% (mobilde sağa kaymayı keser) */
   width: 100%;
-  height: 100vh;
-  height: 100dvh;
 
-  max-width: 100%;
-  max-height: 100vh;
+  /* ✅ tek kaynak: mobil safari için en stabil */
+  height: 100dvh;
   max-height: 100dvh;
 
   overflow: hidden;
@@ -50,7 +48,10 @@ html, body {
 .bg-photo-layer::before {
   content: "";
   position: absolute;
-  inset: -6%;
+
+  /* ✅ daha fazla taşır: mobilde boşluk hissini tamamen yok eder */
+  inset: -12%;
+
   background-image: url('/bg.jpeg');
   background-repeat: no-repeat;
   background-position: center;
@@ -81,21 +82,21 @@ html, body {
   transform: scale(1);
 }
 
-/* ✅ MOBIL: foto ekrana daha yakın + boşluk olursa blur geçişi belli etmez */
+/* ✅ MOBIL: bg foto TAM EKRAN (cover) + blur katman boşluğu gizler */
 @media (max-width: 520px) {
-  .bg-photo-layer.on { opacity: 0.34; }
+  .bg-photo-layer.on { opacity: 0.36; }
 
   /* blur katmanı mobilde aktif: boşluk hissini yok eder */
   .bg-photo-layer::before {
-    opacity: 0.60;
-    filter: blur(22px) saturate(1.12);
-    transform: scale(1.10);
+    opacity: 0.65;
+    filter: blur(26px) saturate(1.15);
+    transform: scale(1.18);
   }
 
-  /* 🔑 contain yerine kontrollü cover: daha büyük görünür */
+  /* 🔑 TAM EKRAN */
   .bg-photo-layer::after {
-    background-size: 122% auto;     /* 118-128 arası oynayabilirsin */
-    background-position: center 50%;/* 45-55 arası ince ayar */
+    background-size: cover;
+    background-position: center center;
   }
 }
 
