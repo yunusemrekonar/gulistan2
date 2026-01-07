@@ -42,8 +42,6 @@ html, body {
 
   background-image: url('/bg.jpeg');
   background-repeat: no-repeat;
-
-  /* ✅ fully responsive */
   background-position: center center;
   background-size: cover;
 
@@ -57,7 +55,19 @@ html, body {
 
 .bg-photo-layer.on {
   opacity: 0.22;
-  transform: scale(1.0);
+  transform: scale(1);
+}
+
+/* ✅ Mobilde: foto "daha küçük/geri" dursun ama ekranı kaplasın */
+@media (max-width: 520px) {
+  .bg-photo-layer {
+    background-size: 112% auto;   /* cover'dan biraz zoom-out hissi */
+    background-position: center 42%;
+  }
+  .bg-photo-layer.on {
+    opacity: 0.30;                /* mobilde daha görünür */
+    transform: scale(1);
+  }
 }
 
 .float-layer {
@@ -489,13 +499,11 @@ html, body {
   animation: tinyPulse 1.22s ease-in-out infinite;
 }
 
-/* mobil performans: blur kapat + bg biraz daha görünür */
+/* mobil performans: blur kapat */
 @media (max-width: 520px) {
   .card { backdrop-filter: none; }
   .tap-text { backdrop-filter: none; }
   .lock-btn { backdrop-filter: none; }
-
-  .bg-photo-layer.on { opacity: 0.26; }
 }
 
 /* motion reduce */
