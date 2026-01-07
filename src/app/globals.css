@@ -81,18 +81,21 @@ html, body {
   transform: scale(1);
 }
 
-/* ✅ MOBIL: net foto daha "contain", boşluk kalırsa blur cover doldurur */
+/* ✅ MOBIL: foto ekrana daha yakın + boşluk olursa blur geçişi belli etmez */
 @media (max-width: 520px) {
-  .bg-photo-layer.on { opacity: 0.32; }
+  .bg-photo-layer.on { opacity: 0.34; }
 
+  /* blur katmanı mobilde aktif: boşluk hissini yok eder */
   .bg-photo-layer::before {
-    opacity: 0.55; /* blur arka planı aç */
-    filter: blur(18px) saturate(1.10);
+    opacity: 0.60;
+    filter: blur(22px) saturate(1.12);
+    transform: scale(1.10);
   }
 
+  /* 🔑 contain yerine kontrollü cover: daha büyük görünür */
   .bg-photo-layer::after {
-    background-size: contain;          /* daha az crop */
-    background-position: center 45%;   /* kadrajı ayarla (gerekirse 42-50 arası) */
+    background-size: 122% auto;     /* 118-128 arası oynayabilirsin */
+    background-position: center 50%;/* 45-55 arası ince ayar */
   }
 }
 
