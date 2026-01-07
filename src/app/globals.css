@@ -33,24 +33,47 @@ html, body {
 .page.revealed .glow { opacity: 1; }
 .page.revealed .vignette { opacity: 1; }
 
-/* ✅ Butona basınca en altta beliren arka foto */
+/* ✅ Butona basınca beliren arka foto (desktop: cover) */
 .bg-photo-layer {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
 
-  background-image: url('/bg.jpeg');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-
+  /* animasyon */
   opacity: 0;
   transform: scale(1.08);
+  transition: opacity 1800ms ease, transform 2200ms ease;
+}
+
+/* ✅ Arkada: cover + blur (boşluklar belli olmasın) */
+.bg-photo-layer::before {
+  content: "";
+  position: absolute;
+  inset: -6%;
+  background-image: url('/bg.jpeg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+
+  filter: blur(16px) saturate(1.08);
+  opacity: 0.0;           /* desktopta kapalı */
+  transform: scale(1.06);
+}
+
+/* ✅ Önde: net foto (desktop: cover) */
+.bg-photo-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image: url('/bg.jpeg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+
   filter: saturate(1.05);
-  transition:
-    opacity 1800ms ease,
-    transform 2200ms ease;
+  opacity: 1;
 }
 
 .bg-photo-layer.on {
@@ -58,15 +81,18 @@ html, body {
   transform: scale(1);
 }
 
-/* ✅ Mobilde: foto "daha küçük/geri" dursun ama ekranı kaplasın */
+/* ✅ MOBIL: net foto daha "contain", boşluk kalırsa blur cover doldurur */
 @media (max-width: 520px) {
-  .bg-photo-layer {
-    background-size: 112% auto;   /* cover'dan biraz zoom-out hissi */
-    background-position: center 42%;
+  .bg-photo-layer.on { opacity: 0.32; }
+
+  .bg-photo-layer::before {
+    opacity: 0.55; /* blur arka planı aç */
+    filter: blur(18px) saturate(1.10);
   }
-  .bg-photo-layer.on {
-    opacity: 0.30;                /* mobilde daha görünür */
-    transform: scale(1);
+
+  .bg-photo-layer::after {
+    background-size: contain;          /* daha az crop */
+    background-position: center 45%;   /* kadrajı ayarla (gerekirse 42-50 arası) */
   }
 }
 
@@ -161,7 +187,7 @@ html, body {
 /* kart */
 .card {
   width: min(92vw, 520px);
-  margin-inline: auto; /* ✅ güvenlik */
+  margin-inline: auto;
   border-radius: clamp(18px, 2.4vw, 26px);
   overflow: hidden;
 
@@ -499,7 +525,7 @@ html, body {
   animation: tinyPulse 1.22s ease-in-out infinite;
 }
 
-/* mobil performans: blur kapat */
+/* mobil performans: blur kapat (kart/tap/lock) */
 @media (max-width: 520px) {
   .card { backdrop-filter: none; }
   .tap-text { backdrop-filter: none; }
