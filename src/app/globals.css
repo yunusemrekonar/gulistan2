@@ -10,12 +10,16 @@ html, body {
 /* her zaman ekran kadar */
 .page {
   position: relative;
-  width: 100vw;
+
+  /* ✅ 100vw yerine 100% (mobilde sağa kaymayı keser) */
+  width: 100%;
   height: 100vh;
   height: 100dvh;
-  max-width: 100vw;
+
+  max-width: 100%;
   max-height: 100vh;
   max-height: 100dvh;
+
   overflow: hidden;
 
   background:
@@ -38,7 +42,9 @@ html, body {
 
   background-image: url('/bg.jpeg');
   background-repeat: no-repeat;
-  background-position: center;
+
+  /* ✅ fully responsive */
+  background-position: center center;
   background-size: cover;
 
   opacity: 0;
@@ -129,16 +135,23 @@ html, body {
 .content {
   position: relative;
   z-index: 3;
+
   width: 100%;
   height: 100%;
-  display: grid;
-  place-items: center;
+
+  /* ✅ Mobilde sağa kayma yaşamadan gerçek ortalama */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   padding: clamp(10px, 3vw, 20px);
+  box-sizing: border-box;
 }
 
 /* kart */
 .card {
   width: min(92vw, 520px);
+  margin-inline: auto; /* ✅ güvenlik */
   border-radius: clamp(18px, 2.4vw, 26px);
   overflow: hidden;
 
@@ -476,11 +489,13 @@ html, body {
   animation: tinyPulse 1.22s ease-in-out infinite;
 }
 
-/* mobil performans: blur kapat */
+/* mobil performans: blur kapat + bg biraz daha görünür */
 @media (max-width: 520px) {
   .card { backdrop-filter: none; }
   .tap-text { backdrop-filter: none; }
   .lock-btn { backdrop-filter: none; }
+
+  .bg-photo-layer.on { opacity: 0.26; }
 }
 
 /* motion reduce */
