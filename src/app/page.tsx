@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 
 type HeartFloater = {
@@ -17,6 +17,19 @@ type HeartFloater = {
   r1: number
 }
 
+type BurstHeart = {
+  id: string
+  emoji: string
+  x: number
+  y: number
+  dx: number
+  dy: number
+  rot: number
+  fs: number
+  dur: number
+  delay: number
+}
+
 type CSSVars = React.CSSProperties & {
   ['--op']?: string
   ['--dur']?: string
@@ -27,6 +40,15 @@ type CSSVars = React.CSSProperties & {
   ['--r0']?: string
   ['--r1']?: string
   ['--fs']?: string
+
+  ['--x']?: string
+  ['--y']?: string
+  ['--dx']?: string
+  ['--dy']?: string
+  ['--rot']?: string
+  ['--bdur']?: string
+  ['--bfs']?: string
+  ['--bdel']?: string
 }
 
 function rand(min: number, max: number) {
@@ -34,23 +56,118 @@ function rand(min: number, max: number) {
 }
 
 export default function Page() {
-  const heartEmojis = useMemo(() => ['💗', '💖', '💕', '💘', '💞'], [])
+  const heartEmojis = useMemo(() => ['❤️'], [])
+
+  const [introOn, setIntroOn] = useState(true)
+  const [introUnlocking, setIntroUnlocking] = useState(false)
+  const [revealed, setRevealed] = useState(false)
 
   const [running, setRunning] = useState(false)
+  const [bgOn, setBgOn] = useState(false)
   const [hearts, setHearts] = useState<HeartFloater[]>([])
+  const [bursts, setBursts] = useState<BurstHeart[]>([])
+
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const btnRef = useRef<HTMLButtonElement | null>(null)
 
+  const burstCooldownRef = useRef<number>(0)
+  const warmedUpRef = useRef(false)
+
+  // Audio hazırla
+  useEffect(() => {
+    const audio = new Audio('/song.m4a')
+    audio.loop = true
+    audio.volume = 0.85
+    audioRef.current = audio
+  }, [])
+
+  // INTRO: kilide dokununca sinematik reveal + audio warmup (iOS için)
+  const unlock = async () => {
+    if (introUnlocking) return
+    setIntroUnlocking(true)
+
+    // iOS autoplay engeline karşı "warm-up" (user gesture içinde)
+    try {
+      const a = audioRef.current
+      if (a) {
+        await a.play()
+        a.pause()
+        a.currentTime = 0
+      }
+    } catch {
+      // önemli değil; kalbe basınca zaten play denenecek
+    }
+
+    // kilit dönüş animasyonu başlasın
+    window.setTimeout(() => {
+      setIntroOn(false)
+      setRevealed(true)
+
+      // içerik geldiğinde arka kalpleri biraz gecikmeyle başlat (ilk spike bölünür)
+      window.setTimeout(() => setRunning(true), 420)
+    }, 720)
+  }
+
+  const spawnBurst = () => {
+    const now = Date.now()
+    if (now - burstCooldownRef.current < 550) return
+    burstCooldownRef.current = now
+
+    const el = btnRef.current
+    if (!el) return
+
+    const rect = el.getBoundingClientRect()
+    const cx = rect.left + rect.width / 2
+    const cy = rect.top + rect.height / 2
+
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 520
+
+    const count = warmedUpRef.current
+      ? (isMobile ? 105 : 150)
+      : (isMobile ? 65 : 100)
+
+    warmedUpRef.current = true
+
+    const created: BurstHeart[] = Array.from({ length: count }).map((_, i) => {
+      const a = rand(-Math.PI, Math.PI)
+      const speed = rand(isMobile ? 360 : 440, isMobile ? 720 : 900)
+      const dx = Math.cos(a) * rand(0.30, 0.70) * speed
+      const dy = -Math.abs(Math.sin(a)) * speed - rand(300, 600)
+
+      return {
+        id: `burst-${now}-${i}-${Math.random().toString(16).slice(2)}`,
+        emoji: '❤️',
+        x: cx,
+        y: cy,
+        dx,
+        dy,
+        rot: rand(-120, 120),
+        fs: rand(isMobile ? 20 : 22, isMobile ? 34 : 48),
+        dur: rand(1900, 2600),
+        delay: rand(0, 120),
+      }
+    })
+
+    setBursts((prev) => [...prev, ...created])
+
+    window.setTimeout(() => {
+      const ids = new Set(created.map((b) => b.id))
+      setBursts((prev) => prev.filter((b) => !ids.has(b.id)))
+    }, 3200)
+  }
+
+  // Kalp aksiyonu: arka foto + müzik + burst
   const start = () => {
-    setRunning(true)
+    if (!revealed) return // intro bitmeden kalp çalışmasın
 
-    if (!audioRef.current) {
-      const audio = new Audio('/song.m4a')
-      audio.loop = true
-      audio.volume = 0.85
-      audio.play().catch(() => {})
-      audioRef.current = audio
-    } else {
-      audioRef.current.play().catch(() => {})
+    setBgOn(true)
+    audioRef.current?.play().catch(() => {})
+
+    requestAnimationFrame(() => spawnBurst())
+
+    // running zaten unlock sonrası başlıyor ama yine de güvenli:
+    if (!running) {
+      window.setTimeout(() => setRunning(true), 200)
     }
   }
 
@@ -58,28 +175,26 @@ export default function Page() {
     if (!running) return
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 520
-    const heartCount = isMobile ? 26 : 52
+    const heartCount = isMobile ? 34 : 78
 
     const created: HeartFloater[] = Array.from({ length: heartCount }).map((_, i) => {
-      const emoji = heartEmojis[Math.floor(Math.random() * heartEmojis.length)]
-
       const x0 = rand(-10, 110)
       const y0 = rand(-10, 110)
-      const x1 = x0 + rand(-85, 85)
-      const y1 = y0 + rand(-95, 95)
+      const x1 = x0 + rand(-55, 55)
+      const y1 = y0 + rand(-65, 65)
 
       return {
         id: `heart-${Date.now()}-${i}-${Math.random().toString(16).slice(2)}`,
-        emoji,
-        fs: rand(isMobile ? 18 : 22, isMobile ? 34 : 44), // büyük kalpler
-        op: rand(0.1, 0.22),
-        dur: rand(7, 16),
+        emoji: '❤️',
+        fs: rand(isMobile ? 18 : 20, isMobile ? 32 : 44),
+        op: 1,
+        dur: rand(18, 30),
         x0,
         y0,
         x1,
         y1,
-        r0: rand(-20, 20),
-        r1: rand(-260, 260),
+        r0: rand(-12, 12),
+        r1: rand(-80, 80),
       }
     })
 
@@ -87,81 +202,139 @@ export default function Page() {
   }, [running, heartEmojis])
 
   return (
-    <main className="page">
-      {/* ARKA PLAN: uçuşan kalpler */}
-      <div className="float-layer" aria-hidden="true">
-        {hearts.map((h) => {
-          const styleVars: CSSVars = {
-            ['--op']: String(h.op),
-            ['--dur']: `${h.dur}s`,
-            ['--x0']: `${h.x0}vw`,
-            ['--y0']: `${h.y0}vh`,
-            ['--x1']: `${h.x1}vw`,
-            ['--y1']: `${h.y1}vh`,
-            ['--r0']: `${h.r0}deg`,
-            ['--r1']: `${h.r1}deg`,
-            ['--fs']: `${h.fs}px`,
-          }
+    <>
+      {/* INTRO (sadece kilit) */}
+      {introOn && (
+        <div
+          className={`intro ${introUnlocking ? 'unlocking fadeout' : ''}`}
+          role="dialog"
+          aria-label="Kilit ekranı"
+        >
+          <div className="intro-inner">
+           <button className="lock-btn" onClick={unlock} aria-label="Kilidi aç">
+  <div className="lock-icon" aria-hidden="true">
+    {introUnlocking ? '🔓' : '🔒'}
+  </div>
+  <h2 className="lock-title">İyi ki doğdun sevgilim...</h2>
+</button>
 
-          return (
-            <div key={h.id} className="heart-floater" style={styleVars}>
-              {h.emoji}
+<div className="intro-hint" aria-hidden="true">
+  <span className="dot">❤️</span>
+  <span>Sevgiyle dokun, hikâyemiz başlasın</span>
+</div>
+
+          </div>
+        </div>
+      )}
+
+      <main className={`page ${revealed ? 'revealed' : ''}`}>
+        {/* En altta beliren arka foto */}
+        <div className={`bg-photo-layer ${bgOn ? 'on' : ''}`} aria-hidden="true" />
+
+        {/* ARKA PLAN: uçuşan kalpler */}
+        <div className="float-layer" aria-hidden="true">
+          {hearts.map((h) => {
+            const styleVars: CSSVars = {
+              ['--op']: String(h.op),
+              ['--dur']: `${h.dur}s`,
+              ['--x0']: `${h.x0}vw`,
+              ['--y0']: `${h.y0}vh`,
+              ['--x1']: `${h.x1}vw`,
+              ['--y1']: `${h.y1}vh`,
+              ['--r0']: `${h.r0}deg`,
+              ['--r1']: `${h.r1}deg`,
+              ['--fs']: `${h.fs}px`,
+            }
+            return (
+              <div key={h.id} className="heart-floater" style={styleVars}>
+                {h.emoji}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* BUTONDAN ÇIKAN KALPLER */}
+        <div className="burst-layer" aria-hidden="true">
+          {bursts.map((b) => {
+            const styleVars: CSSVars = {
+              ['--x']: `${b.x}px`,
+              ['--y']: `${b.y}px`,
+              ['--dx']: `${b.dx}px`,
+              ['--dy']: `${b.dy}px`,
+              ['--rot']: `${b.rot}deg`,
+              ['--bdur']: `${b.dur}ms`,
+              ['--bfs']: `${b.fs}px`,
+              ['--bdel']: `${b.delay}ms`,
+            }
+            return (
+              <span key={b.id} className="burst-heart" style={styleVars}>
+                {b.emoji}
+              </span>
+            )
+          })}
+        </div>
+
+        <div className="glow" aria-hidden="true" />
+        <div className="vignette" />
+
+        {/* ÖN PLAN */}
+        <div className="content">
+          <section className="card">
+            <div className="photo-wrap">
+              <Image
+                className="photo"
+                src="/bg.jpeg"
+                alt="photo"
+                width={1600}
+                height={1100}
+                sizes="(max-width: 520px) 92vw, 520px"
+                priority
+              />
             </div>
-          )
-        })}
-      </div>
 
-      <div className="vignette" />
+            <div className="card-text">
+              <h1 className="title">
+                İyi ki doğdun aşkım 💖
+                <br />
+                Ülkeler ayrı olsa da,
+                <br />
+                kalbimin yönü hep sana dönük.
+              </h1>
 
-      {/* ÖN PLAN */}
-      <div className="content">
-        <section className="card">
-          {/* ORTADAKİ FOTO */}
-          <Image
-            className="photo"
-            src="/bg.jpeg"
-            alt="photo"
-            width={1200}
-            height={800}
-            priority
-          />
+              <p className="subtitle">
+                Saatler farklı, yollar uzun…
+                <br />
+                ama seni sevmek hep aynı saat:
+                <br />
+                her an.
+              </p>
 
-          <div className="card-text">
-            {/* ❤️ ROMANTİK METİN */}
-            <h1 className="title">
-              İyi ki doğdun aşkım 💖
-              <br />
-              Ülkeler ayrı olsa da,
-              <br />
-              kalbimin yönü hep sana dönük.
-            </h1>
+              <div className="actions">
+                <button
+                  ref={btnRef}
+                  className="heart-btn"
+                  onClick={start}
+                  aria-label="Kalbe dokun"
+                >
+                  <span>❤️</span>
+                </button>
 
-            <p className="subtitle">
-              Saatler farklı, yollar uzun…
-              <br />
-              ama seni sevmek hep aynı saat:
-              <br />
-              her an.
-            </p>
-
-            {/* ❤️ KALP + ALT YAZI */}
-            <div className="actions">
-              <button
-                className="heart-btn"
-                onClick={start}
-                aria-label="Kalbe dokun"
-              >
-                <span>❤️</span>
-              </button>
-
-              <div className="tap-text">
-                <span className="tap-dot">💗</span>
-                <span>Kalbe dokun</span>
+                <div className="tap-text">
+                  <span className="tap-dot">❤️</span>
+                  <span>Kalbime dokun</span>
+                </div>
               </div>
             </div>
+          </section>
+
+          <div className="sparkles" aria-hidden="true">
+            <span className="spark s1">✦</span>
+            <span className="spark s2">✦</span>
+            <span className="spark s3">✦</span>
+            <span className="spark s4">✦</span>
           </div>
-        </section>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   )
 }
