@@ -63,7 +63,6 @@ export default function Page() {
   const [revealed, setRevealed] = useState(false)
 
   const [running, setRunning] = useState(false)
-  const [bgOn, setBgOn] = useState(false)
   const [hearts, setHearts] = useState<HeartFloater[]>([])
   const [bursts, setBursts] = useState<BurstHeart[]>([])
 
@@ -103,7 +102,7 @@ export default function Page() {
       setIntroOn(false)
       setRevealed(true)
 
-      // içerik geldiğinde arka kalpleri biraz gecikmeyle başlat (ilk spike bölünür)
+      // içerik geldiğinde arka kalpleri biraz gecikmeyle başlat
       window.setTimeout(() => setRunning(true), 420)
     }, 720)
   }
@@ -156,39 +155,43 @@ export default function Page() {
     }, 3200)
   }
 
-  // Kalp aksiyonu: arka foto + müzik + burst
+  // Kalp aksiyonu: müzik + burst
   const start = () => {
-    if (!revealed) return // intro bitmeden kalp çalışmasın
+    if (!revealed) return
 
-    setBgOn(true)
     audioRef.current?.play().catch(() => {})
-
     requestAnimationFrame(() => spawnBurst())
 
-    // running zaten unlock sonrası başlıyor ama yine de güvenli:
     if (!running) {
       window.setTimeout(() => setRunning(true), 200)
     }
   }
 
+  // ✅ ARKA KALPLERİ ARTIRDIK (mobil + desktop) + daha soft yaptık
   useEffect(() => {
     if (!running) return
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 520
-    const heartCount = isMobile ? 34 : 78
+
+    // önceki: mobile 34 / desktop 78
+    // yeni:   mobile 46 / desktop 108  (çok abartmadan yoğunluk artışı)
+    const heartCount = isMobile ? 46 : 108
 
     const created: HeartFloater[] = Array.from({ length: heartCount }).map((_, i) => {
       const x0 = rand(-10, 110)
       const y0 = rand(-10, 110)
-      const x1 = x0 + rand(-55, 55)
-      const y1 = y0 + rand(-65, 65)
+      const x1 = x0 + rand(-70, 70)
+      const y1 = y0 + rand(-80, 80)
 
       return {
         id: `heart-${Date.now()}-${i}-${Math.random().toString(16).slice(2)}`,
         emoji: '❤️',
-        fs: rand(isMobile ? 18 : 20, isMobile ? 32 : 44),
-        op: 1,
-        dur: rand(18, 30),
+        fs: rand(isMobile ? 16 : 18, isMobile ? 28 : 40),
+
+        // ✅ op artık 1 değil: kalabalık ama rahatsız etmeyen
+        op: rand(0.10, 0.22),
+
+        dur: rand(16, 28),
         x0,
         y0,
         x1,
@@ -211,26 +214,22 @@ export default function Page() {
           aria-label="Kilit ekranı"
         >
           <div className="intro-inner">
-           <button className="lock-btn" onClick={unlock} aria-label="Kilidi aç">
-  <div className="lock-icon" aria-hidden="true">
-    {introUnlocking ? '🔓' : '🔒'}
-  </div>
-  <h2 className="lock-title">İyi ki doğdun gülüşüm...</h2>
-</button>
+            <button className="lock-btn" onClick={unlock} aria-label="Kilidi aç">
+              <div className="lock-icon" aria-hidden="true">
+                {introUnlocking ? '🔓' : '🔒'}
+              </div>
+              <h2 className="lock-title">İyi ki doğdun gülüşüm...</h2>
+            </button>
 
-<div className="intro-hint" aria-hidden="true">
-  <span className="dot">❤️</span>
-  <span>Sevgiyle dokun, hikâyemiz başlasın</span>
-</div>
-
+            <div className="intro-hint" aria-hidden="true">
+              <span className="dot">❤️</span>
+              <span>Sevgiyle dokun, hikâyemiz başlasın</span>
+            </div>
           </div>
         </div>
       )}
 
       <main className={`page ${revealed ? 'revealed' : ''}`}>
-        {/* En altta beliren arka foto */}
-        <div className={`bg-photo-layer ${bgOn ? 'on' : ''}`} aria-hidden="true" />
-
         {/* ARKA PLAN: uçuşan kalpler */}
         <div className="float-layer" aria-hidden="true">
           {hearts.map((h) => {
