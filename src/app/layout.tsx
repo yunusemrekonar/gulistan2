@@ -1,8 +1,8 @@
 import './globals.css'
 
 export const metadata = {
-  title: '💞',
-  description: 'Ilk Dogum Gunumuz',
+  title: 'Emre 💞 Gülüş',
+  description: 'İlk Doğum Gunumuz',
 }
 
 export default function RootLayout({
