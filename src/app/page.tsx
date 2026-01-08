@@ -215,7 +215,7 @@ export default function Page() {
   <div className="lock-icon" aria-hidden="true">
     {introUnlocking ? '🔓' : '🔒'}
   </div>
-  <h2 className="lock-title">İyi ki doğdun sevgilim...</h2>
+  <h2 className="lock-title">İyi ki doğdun gülüşüm...</h2>
 </button>
 
 <div className="intro-hint" aria-hidden="true">
