@@ -33,7 +33,7 @@ html, body {
 
 /* ✅ Butona basınca beliren arka foto (desktop: cover) */
 .bg-photo-layer {
-  position: absolute;
+  position: fixed;           /* 🔑 absolute yerine: mobilde daha stabil */
   inset: 0;
   z-index: 0;
   pointer-events: none;
@@ -50,16 +50,18 @@ html, body {
   position: absolute;
 
   /* ✅ daha fazla taşır: mobilde boşluk hissini tamamen yok eder */
-  inset: -12%;
+  inset: -15%;
 
   background-image: url('/bg.jpeg');
   background-repeat: no-repeat;
-  background-position: center;
+
+  /* 🔑 TAM ORTA (yatay + dikey) */
+  background-position: 50% 50%;
   background-size: cover;
 
   filter: blur(16px) saturate(1.08);
   opacity: 0.0;           /* desktopta kapalı */
-  transform: scale(1.06);
+  transform: scale(1.10);
 }
 
 /* ✅ Önde: net foto (desktop: cover) */
@@ -70,7 +72,9 @@ html, body {
 
   background-image: url('/bg.jpeg');
   background-repeat: no-repeat;
-  background-position: center;
+
+  /* 🔑 TAM ORTA (yatay + dikey) */
+  background-position: 50% 50%;
   background-size: cover;
 
   filter: saturate(1.05);
@@ -82,7 +86,7 @@ html, body {
   transform: scale(1);
 }
 
-/* ✅ MOBIL: bg foto TAM EKRAN (cover) + blur katman boşluğu gizler */
+/* ✅ MOBIL: bg foto TAM EKRAN + TAM ORTA */
 @media (max-width: 520px) {
   .bg-photo-layer.on { opacity: 0.36; }
 
@@ -90,13 +94,17 @@ html, body {
   .bg-photo-layer::before {
     opacity: 0.65;
     filter: blur(26px) saturate(1.15);
-    transform: scale(1.18);
+    transform: scale(1.22);
+
+    /* 🔑 MOBİLDE DE TAM ORTA */
+    background-position: 50% 50%;
+    background-size: cover;
   }
 
-  /* 🔑 TAM EKRAN */
+  /* 🔑 MOBİLDE DE TAM ORTA */
   .bg-photo-layer::after {
+    background-position: 50% 50%;
     background-size: cover;
-    background-position: center center;
   }
 }
 
