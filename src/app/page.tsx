@@ -72,7 +72,6 @@ export default function Page() {
   const burstCooldownRef = useRef<number>(0)
   const warmedUpRef = useRef(false)
 
-  // Audio hazırla
   useEffect(() => {
     const audio = new Audio('/song.m4a')
     audio.loop = true
@@ -80,12 +79,10 @@ export default function Page() {
     audioRef.current = audio
   }, [])
 
-  // INTRO: kilide dokununca sinematik reveal + audio warmup (iOS için)
   const unlock = async () => {
     if (introUnlocking) return
     setIntroUnlocking(true)
 
-    // iOS autoplay engeline karşı "warm-up" (user gesture içinde)
     try {
       const a = audioRef.current
       if (a) {
@@ -93,16 +90,11 @@ export default function Page() {
         a.pause()
         a.currentTime = 0
       }
-    } catch {
-      // önemli değil; kalbe basınca zaten play denenecek
-    }
+    } catch {}
 
-    // kilit dönüş animasyonu başlasın
     window.setTimeout(() => {
       setIntroOn(false)
       setRevealed(true)
-
-      // içerik geldiğinde arka kalpleri biraz gecikmeyle başlat
       window.setTimeout(() => setRunning(true), 420)
     }, 720)
   }
@@ -155,10 +147,8 @@ export default function Page() {
     }, 3200)
   }
 
-  // Kalp aksiyonu: müzik + burst
   const start = () => {
     if (!revealed) return
-
     audioRef.current?.play().catch(() => {})
     requestAnimationFrame(() => spawnBurst())
 
@@ -167,14 +157,10 @@ export default function Page() {
     }
   }
 
-  // ✅ ARKA KALPLERİ ARTIRDIK (mobil + desktop) + daha soft yaptık
   useEffect(() => {
     if (!running) return
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 520
-
-    // önceki: mobile 34 / desktop 78
-    // yeni:   mobile 46 / desktop 108  (çok abartmadan yoğunluk artışı)
     const heartCount = isMobile ? 46 : 108
 
     const created: HeartFloater[] = Array.from({ length: heartCount }).map((_, i) => {
@@ -188,8 +174,8 @@ export default function Page() {
         emoji: '❤️',
         fs: rand(isMobile ? 16 : 18, isMobile ? 28 : 40),
 
-        // ✅ op artık 1 değil: kalabalık ama rahatsız etmeyen
-        op: rand(0.10, 0.22),
+        /* ✅ TAM OPACITY */
+        op: 1,
 
         dur: rand(16, 28),
         x0,
@@ -206,7 +192,6 @@ export default function Page() {
 
   return (
     <>
-      {/* INTRO (sadece kilit) */}
       {introOn && (
         <div
           className={`intro ${introUnlocking ? 'unlocking fadeout' : ''}`}
@@ -230,7 +215,6 @@ export default function Page() {
       )}
 
       <main className={`page ${revealed ? 'revealed' : ''}`}>
-        {/* ARKA PLAN: uçuşan kalpler */}
         <div className="float-layer" aria-hidden="true">
           {hearts.map((h) => {
             const styleVars: CSSVars = {
@@ -252,7 +236,6 @@ export default function Page() {
           })}
         </div>
 
-        {/* BUTONDAN ÇIKAN KALPLER */}
         <div className="burst-layer" aria-hidden="true">
           {bursts.map((b) => {
             const styleVars: CSSVars = {
@@ -276,7 +259,6 @@ export default function Page() {
         <div className="glow" aria-hidden="true" />
         <div className="vignette" />
 
-        {/* ÖN PLAN */}
         <div className="content">
           <section className="card">
             <div className="photo-wrap">
